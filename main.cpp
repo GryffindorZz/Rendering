@@ -90,6 +90,9 @@ int main() {
     shader.Compile();
     Model model;
     model.Load("../Model/obj/teapot.obj");
+
+    camera.UpdateViewMatrix();
+    camera.UpdateProjMatrix(WIDTH, HEIGHT, NEAR_CLIP, FAR_CLIP);
     //Main Loop
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
@@ -97,8 +100,10 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
         shader.Use();
         //
-        camera.UpdateViewMatrix();
-        camera.UpdateProjMatrix(WIDTH, HEIGHT, NEAR_CLIP, FAR_CLIP);
+        if(camera.need_update) {
+            camera.UpdateViewMatrix();
+            camera.need_update = false;
+        }
         //
         glUniformMatrix4fv(glGetUniformLocation(shader.Program, "projection"), 1, GL_FALSE,
                            glm::value_ptr(camera.GetProjMatrix()));

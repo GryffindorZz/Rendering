@@ -22,9 +22,10 @@ public:
     //
     inline glm::vec3 GetCameraPosition();
     inline glm::vec3 ToCartesian();
-    float rotate_speed = 0.005;
-    float zoom_speed = 0.1;
-    float pan_speed = 0.01;
+    float rotate_speed;
+    float zoom_speed;
+    float pan_speed;
+    bool need_update;
 private:
     float theta;
     float phi;

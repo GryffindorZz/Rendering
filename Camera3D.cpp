@@ -12,6 +12,10 @@ Camera3D::Camera3D() {
     target = glm::vec3(0.0f, 0.0f, 0.0f);
     ViewMatrix = glm::mat4(1.0f);
     ProjMatrix = glm::mat4(1.0f);
+    rotate_speed = 0.005f;
+    zoom_speed = 0.1f;
+    pan_speed = 0.01f;
+    need_update = false;
 }
 
 Camera3D::Camera3D(float _theta, float _phi, float _radius) {
@@ -24,6 +28,7 @@ Camera3D::Camera3D(float _theta, float _phi, float _radius) {
 }
 
 void Camera3D::Rotate(float d_theta, float d_phi) {
+    need_update = true;
     if (up > 1.0f)
         theta += d_theta;
     else
@@ -43,6 +48,7 @@ void Camera3D::Rotate(float d_theta, float d_phi) {
 }
 
 void Camera3D::Zoom(float distance) {
+    need_update = true;
     radius += distance;
     if (radius < 0.5f)
         radius = 0.5f;
@@ -54,6 +60,7 @@ void Camera3D::Zoom(float distance) {
 
 
 void Camera3D::Pan(float dx, float dy) {
+    need_update = true;
     glm::vec3 look = glm::normalize(target - GetCameraPosition());
     glm::vec3 world_up = glm::vec3(0.0f,up,0.0f);
     glm::vec3 right = glm::cross(look,world_up);
