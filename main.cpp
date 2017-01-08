@@ -8,6 +8,7 @@
 #include "Light.h"
 #include "Camera3D.h"
 
+
 //Global Variable
 const int WIDTH = 1024;
 const int HEIGHT = 768;
@@ -21,7 +22,6 @@ bool ARCACTIVE = false;
 bool PANACTIVE = false;
 float LAST_X = 0;
 float LAST_Y = 0;
-//Camera camera;
 Camera3D camera;
 Light light;
 //Global Variable End
@@ -86,11 +86,17 @@ int main() {
     //Enable GL_DEPTH_TEST
     glEnable(GL_DEPTH_TEST);
 
+    //NanoGUI
+    //
+
+    //Shader
     Shader shader("../GLSL/render.vs", "../GLSL/render.fs");
     shader.Compile();
+    //Model
     Model model;
     model.Load("../Model/obj/teapot.obj");
 
+    //Camera
     camera.UpdateViewMatrix();
     camera.UpdateProjMatrix(WIDTH, HEIGHT, NEAR_CLIP, FAR_CLIP);
     //Main Loop
@@ -100,7 +106,7 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
         shader.Use();
         //
-        if(camera.need_update) {
+        if (camera.need_update) {
             camera.UpdateViewMatrix();
             camera.need_update = false;
         }

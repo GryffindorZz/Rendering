@@ -4,8 +4,8 @@
 #include "Light.h"
 Light::Light() {
     position = glm::vec3(2,2,2);
-    ambient = glm::vec3(0.1f,0.1f,0.1f);
-    diffuse = glm::vec3(0.7f,0.7f,0.7f);
+    ambient = glm::vec3(0.2f,0.2f,0.2f);
+    diffuse = glm::vec3(0.8f,0.8f,0.8f);
     specular = glm::vec3(1.0f,1.0f,1.0f);
 }
 
