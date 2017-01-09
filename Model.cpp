@@ -8,7 +8,7 @@
 
 Model::Model() {
     mat_ambient = glm::vec3(0.1f,0.1f,0.1f);
-    mat_diffuse = glm::vec3(0.8f,0.2f,0.3f);
+    mat_diffuse = glm::vec3(0.7f,0.2f,0.2f);
     mat_specular = glm::vec3(0.0f,0.0f,0.0f);
     mat_shininess = 1.0f;
 }
