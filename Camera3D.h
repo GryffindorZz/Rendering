@@ -20,7 +20,7 @@ public:
     void UpdateProjMatrix(const int WIDTH,const int HEIGHT,float near,float far);
     void Reset();
     //
-    inline glm::vec3 GetCameraPosition();
+    glm::vec3 GetCameraPosition();
     inline glm::vec3 ToCartesian();
     float rotate_speed;
     float zoom_speed;

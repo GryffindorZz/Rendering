@@ -2,11 +2,11 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <glm/gtc/type_ptr.hpp>
-
 #include "Shader.h"
 #include "Model.h"
 #include "Light.h"
 #include "Camera3D.h"
+#include "Interaction.h"
 
 
 //Global Variable
@@ -69,12 +69,7 @@ int main() {
     std::cout << "GLSLVersion: " << byteSLVersion << std::endl;
     //End
 
-    //Interactive Function
-    glfwSetKeyCallback(window, key_callback);
-    glfwSetCursorPosCallback(window, cursor_callback);
-    glfwSetMouseButtonCallback(window, mouse_button_callback);
-    glfwSetScrollCallback(window, scroll_callback);
-    //End
+
 
     glewExperimental = GL_TRUE;
     GLenum err = glewInit();
@@ -86,8 +81,18 @@ int main() {
     //Enable GL_DEPTH_TEST
     glEnable(GL_DEPTH_TEST);
 
-    //NanoGUI
-    //
+    // Setup ImGui binding
+    if(!MyLayout::Init(window)) {
+        std::cout << "Failed to create IMGUI window" << std::endl;
+        return -1;
+    }
+
+    //Interactive Function
+    glfwSetKeyCallback(window, key_callback);
+    glfwSetCursorPosCallback(window, cursor_callback);
+    glfwSetMouseButtonCallback(window, mouse_button_callback);
+    glfwSetScrollCallback(window, scroll_callback);
+    //End
 
     //Shader
     Shader shader("../GLSL/render.vs", "../GLSL/render.fs");
@@ -102,6 +107,8 @@ int main() {
     //Main Loop
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
+        MyLayout::SetLayout();
+        //
         glClearColor(BACKGROUND_COLOR_R, BACKGROUND_COLOR_G, BACKGROUND_COLOR_B, BACKGROUND_COLOR_A);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
         shader.Use();
@@ -138,8 +145,10 @@ int main() {
         glUniform1f(glGetUniformLocation(shader.Program, "material.shininess"), model.GetMatShininess());
         //
         model.Draw(shader);
+        MyLayout::Render();
         glfwSwapBuffers(window);
     }
+    MyLayout::ShutDown();
     glfwTerminate();
     return 0;
 }
