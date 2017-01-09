@@ -15,8 +15,9 @@ bool MyLayout::Init(GLFWwindow *window) {
 }
 
 bool MyLayout::SetLayout() {
+
     ImGui_ImplGlfwGL3_NewFrame();
-    ImGui::SetNextWindowSize(ImVec2(100,300), ImGuiSetCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(100, 300), ImGuiSetCond_FirstUseEver);
     ImGui::SetNextWindowPos(ImVec2(5, 5), ImGuiSetCond_FirstUseEver);
     ImGui::Begin("Control");
     ImGui::Text("Hello World!");
@@ -24,7 +25,6 @@ bool MyLayout::SetLayout() {
     ImGui::End();
     return false;
 }
-
 void ::MyLayout::Render() {
     ImGui::Render();
 }
