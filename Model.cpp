@@ -147,16 +147,38 @@ glm::vec3 Model::GetMatAmbient() {
     return mat_ambient;
 }
 
+void Model::SetMatAmbient(float color[3]) {
+    mat_ambient.r = color[0];
+    mat_ambient.g = color[1];
+    mat_ambient.b = color[2];
+}
+
 glm::vec3 Model::GetMatDiffuse() {
     return mat_diffuse;
+}
+
+void Model::SetMatDiffuse(float *color) {
+    mat_diffuse.r = color[0];
+    mat_diffuse.g = color[1];
+    mat_diffuse.b = color[2];
 }
 
 glm::vec3 Model::GetMatSpecular() {
     return mat_specular;
 }
 
+void Model::SetMatSpecular(float *color) {
+    mat_specular.r = color[0];
+    mat_specular.g = color[1];
+    mat_specular.b = color[2];
+}
+
 float Model::GetMatShininess() {
     return mat_shininess;
+}
+
+void Model::SetMatShininess(float s) {
+    mat_shininess = s;
 }
 
 void Model::SetModelPath(char* _path) {

@@ -54,8 +54,6 @@ void Camera3D::Zoom(float distance) {
         radius = 0.5f;
     if (radius > 8.0f)
         radius = 8.0f;
-
-
 }
 
 

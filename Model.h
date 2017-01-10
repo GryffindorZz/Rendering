@@ -32,9 +32,13 @@ public:
     void TranslateToCenter();
     void Scale();
     glm::vec3 GetMatAmbient();
+    void SetMatAmbient(float* color);
     glm::vec3 GetMatDiffuse();
+    void SetMatDiffuse(float* color);
     glm::vec3 GetMatSpecular();
+    void SetMatSpecular(float* color);
     float GetMatShininess();
+    void SetMatShininess(float s);
     //
     MyMesh mesh;
     std::vector<Vertex> vertex;

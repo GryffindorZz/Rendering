@@ -173,7 +173,7 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
 }
 
 void cursor_callback(GLFWwindow *window, double xpos, double ypos) {
-    if (ARCACTIVE) {
+    if (ARCACTIVE && xpos > 150) {
         float dTheta = ((float) (LAST_X - xpos) * camera.rotate_speed);
         float dPhi = ((float) (LAST_Y - ypos) * camera.rotate_speed);
         camera.Rotate(-dTheta, dPhi);
