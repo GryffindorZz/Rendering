@@ -99,7 +99,6 @@ int main() {
     shader.Compile();
     //Model
     Model model;
-    model.Load("../Model/obj/teapot.obj");
 
     //Camera
     camera.UpdateViewMatrix();
@@ -107,44 +106,57 @@ int main() {
     //Main Loop
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
-        MyLayout::SetLayout();
-        //
+        MyLayout::SetLayout(model);
+        if(model.need_update) {
+            Model _model;
+            _model.SetModelPath(model.GetModelPath());
+            _model.Load();
+            model = _model;
+            model.need_update = false;
+            model.status = true;
+        }
         glClearColor(BACKGROUND_COLOR_R, BACKGROUND_COLOR_G, BACKGROUND_COLOR_B, BACKGROUND_COLOR_A);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-        shader.Use();
         //
-        if (camera.need_update) {
-            camera.UpdateViewMatrix();
-            camera.need_update = false;
+        if(model.status) {
+            shader.Use();
+            //
+            if (camera.need_update) {
+                camera.UpdateViewMatrix();
+                camera.need_update = false;
+            }
+            //
+            glUniformMatrix4fv(glGetUniformLocation(shader.Program, "projection"), 1, GL_FALSE,
+                               glm::value_ptr(camera.GetProjMatrix()));
+            glUniformMatrix4fv(glGetUniformLocation(shader.Program, "view"), 1, GL_FALSE,
+                               glm::value_ptr(camera.GetViewMatirx()));
+            glUniformMatrix4fv(glGetUniformLocation(shader.Program, "model"), 1, GL_FALSE,
+                               glm::value_ptr(model.GetModelMatrix()));
+            //For convenience, set the light position equal to camera position
+            glm::vec3 camerapos = camera.GetCameraPosition();
+            light.SetPosition(camerapos);
+            glUniform3f(glGetUniformLocation(shader.Program, "light1.position"), light.GetPosition().x,
+                        light.GetPosition().y, light.GetPosition().z);
+            glUniform3f(glGetUniformLocation(shader.Program, "light1.ambient"), light.GetAmbient().r,
+                        light.GetAmbient().g,
+                        light.GetAmbient().b);
+            glUniform3f(glGetUniformLocation(shader.Program, "light1.diffuse"), light.GetDiffuse().r,
+                        light.GetDiffuse().g,
+                        light.GetDiffuse().b);
+            glUniform3f(glGetUniformLocation(shader.Program, "light1.specular"), light.GetSpecular().r,
+                        light.GetSpecular().g, light.GetSpecular().b);
+            //
+            glUniform3f(glGetUniformLocation(shader.Program, "material.ambient"), model.GetMatAmbient().r,
+                        model.GetMatAmbient().g, model.GetMatAmbient().b);
+            glUniform3f(glGetUniformLocation(shader.Program, "material.diffuse"), model.GetMatDiffuse().r,
+                        model.GetMatDiffuse().g, model.GetMatDiffuse().b);
+            glUniform3f(glGetUniformLocation(shader.Program, "material.specular"), model.GetMatSpecular().r,
+                        model.GetMatSpecular().g, model.GetMatSpecular().b);
+            glUniform1f(glGetUniformLocation(shader.Program, "material.shininess"), model.GetMatShininess());
+            //
+            model.Draw(shader);
         }
-        //
-        glUniformMatrix4fv(glGetUniformLocation(shader.Program, "projection"), 1, GL_FALSE,
-                           glm::value_ptr(camera.GetProjMatrix()));
-        glUniformMatrix4fv(glGetUniformLocation(shader.Program, "view"), 1, GL_FALSE,
-                           glm::value_ptr(camera.GetViewMatirx()));
-        glUniformMatrix4fv(glGetUniformLocation(shader.Program, "model"), 1, GL_FALSE,
-                           glm::value_ptr(model.GetModelMatrix()));
-        //For convenience, set the light position equal to camera position
-        glm::vec3 camerapos = camera.GetCameraPosition();
-        light.SetPosition(camerapos);
-        glUniform3f(glGetUniformLocation(shader.Program, "light1.position"), light.GetPosition().x,
-                    light.GetPosition().y, light.GetPosition().z);
-        glUniform3f(glGetUniformLocation(shader.Program, "light1.ambient"), light.GetAmbient().r, light.GetAmbient().g,
-                    light.GetAmbient().b);
-        glUniform3f(glGetUniformLocation(shader.Program, "light1.diffuse"), light.GetDiffuse().r, light.GetDiffuse().g,
-                    light.GetDiffuse().b);
-        glUniform3f(glGetUniformLocation(shader.Program, "light1.specular"), light.GetSpecular().r,
-                    light.GetSpecular().g, light.GetSpecular().b);
-        //
-        glUniform3f(glGetUniformLocation(shader.Program, "material.ambient"), model.GetMatAmbient().r,
-                    model.GetMatAmbient().g, model.GetMatAmbient().b);
-        glUniform3f(glGetUniformLocation(shader.Program, "material.diffuse"), model.GetMatDiffuse().r,
-                    model.GetMatDiffuse().g, model.GetMatDiffuse().b);
-        glUniform3f(glGetUniformLocation(shader.Program, "material.specular"), model.GetMatSpecular().r,
-                    model.GetMatSpecular().g, model.GetMatSpecular().b);
-        glUniform1f(glGetUniformLocation(shader.Program, "material.shininess"), model.GetMatShininess());
-        //
-        model.Draw(shader);
+
         MyLayout::Render();
         glfwSwapBuffers(window);
     }

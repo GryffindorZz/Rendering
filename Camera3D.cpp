@@ -85,6 +85,7 @@ void Camera3D::UpdateProjMatrix(const int WIDTH, const int HEIGHT, float near, f
 }
 
 void Camera3D::Reset() {
+    need_update = true;
     theta = 0.0f;
     phi = M_PI/2;
     radius = 2.0f;
