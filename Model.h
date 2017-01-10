@@ -20,7 +20,9 @@ struct Vertex{
 class Model{
 public:
     Model();
-    void Load(std::string path);
+    void SetModelPath(char* _path);
+    char* GetModelPath();
+    void Load();
     void BindData();
     void Draw(Shader shader);
     unsigned int GetVertexNum();
@@ -37,10 +39,13 @@ public:
     MyMesh mesh;
     std::vector<Vertex> vertex;
     std::vector<GLuint> indices;
+    bool need_update;
+    bool status;
 private:
     GLuint VAO;
     GLuint VBO;
     GLuint EBO;
+    char *model_path;
     glm::vec3 center;
     float radius;
     unsigned int vertexNum;

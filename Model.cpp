@@ -11,15 +11,17 @@ Model::Model() {
     mat_diffuse = glm::vec3(0.7f,0.2f,0.2f);
     mat_specular = glm::vec3(0.0f,0.0f,0.0f);
     mat_shininess = 1.0f;
+    need_update = false;
+    status = false;
 }
 
-void Model::Load(std::string path) {
+void Model::Load() {
 
     mesh.request_face_normals();
     mesh.request_vertex_normals();
-
+    std::string _path = model_path;
     OpenMesh::IO::Options opt;
-    if (!OpenMesh::IO::read_mesh(mesh, path, opt))
+    if (!OpenMesh::IO::read_mesh(mesh, _path, opt))
         std::cerr << "ERROR LOADING MESH FORM FILE" << std::endl;
     if (!opt.check(OpenMesh::IO::Options::FaceNormal))
         mesh.update_face_normals();
@@ -155,6 +157,16 @@ glm::vec3 Model::GetMatSpecular() {
 
 float Model::GetMatShininess() {
     return mat_shininess;
+}
+
+void Model::SetModelPath(char* _path) {
+    if(!_path)
+        std::cout << "path error!" << std::endl;
+    model_path = _path;
+}
+
+char *Model::GetModelPath() {
+    return model_path;
 }
 
 
