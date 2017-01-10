@@ -8,10 +8,11 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <imgui.h>
+#include "Model.h"
 #include "imgui_impl_glfw_gl3.h"
 namespace MyLayout{
     bool Init(GLFWwindow* window);
-    bool SetLayout();
+    bool SetLayout(Model &model);
     void Render();
     void ShutDown();
 }
