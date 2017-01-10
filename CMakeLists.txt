@@ -16,5 +16,5 @@ set(SOURCE_FILES main.cpp Shader.h Shader.cpp Model.h Model.cpp MyMesh.h Light.h
         ./ext/imgui.h ./ext/imgui.cpp ./ext/imconfig.h ./ext/imgui_demo.cpp ./ext/imgui_draw.cpp ./ext/imgui_internal.h
         ./ext/stb_rect_pack.h ./ext/stb_textedit.h ./ext/stb_truetype.h Interaction.h Interaction.cpp)
 add_executable(Rendering ${SOURCE_FILES})
-target_link_libraries(Rendering libGLEW.a libglfw.dylib
+target_link_libraries(Rendering libGLEW.a libglfw.dylib libnfd.a
         libOpenMeshCore.dylib libOpenMeshTools.dylib ${EXTRA_LIBS})
