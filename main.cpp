@@ -10,11 +10,11 @@
 
 
 //Global Variable
-const int WIDTH = 1024;
-const int HEIGHT = 768;
-const GLfloat BACKGROUND_COLOR_R = 0.1f;
-const GLfloat BACKGROUND_COLOR_G = 0.2f;
-const GLfloat BACKGROUND_COLOR_B = 0.3f;
+const int WIDTH = 1200;
+const int HEIGHT = 800;
+const GLfloat BACKGROUND_COLOR_R = 1.0f;
+const GLfloat BACKGROUND_COLOR_G = 1.0f;
+const GLfloat BACKGROUND_COLOR_B = 1.0f;
 const GLfloat BACKGROUND_COLOR_A = 1.0f;
 const float NEAR_CLIP = 0.01f;
 const float FAR_CLIP = 10.0f;
@@ -55,7 +55,7 @@ int main() {
     }
 
     glfwMakeContextCurrent(window);
-    glfwSetWindowPos(window, 200, 80);
+    glfwSetWindowPos(window, 150, 60);
 
     //Get Related Information
     const GLubyte *byteGLVersion = glGetString(GL_VERSION);
@@ -68,9 +68,6 @@ int main() {
     std::cout << "GLRenderer: " << byteGLRenderer << std::endl;
     std::cout << "GLSLVersion: " << byteSLVersion << std::endl;
     //End
-
-
-
     glewExperimental = GL_TRUE;
     GLenum err = glewInit();
     if (GLEW_OK != err) {
@@ -82,7 +79,7 @@ int main() {
     glEnable(GL_DEPTH_TEST);
 
     // Setup ImGui binding
-    if(!MyLayout::Init(window)) {
+    if (!MyLayout::Init(window)) {
         std::cout << "Failed to create IMGUI window" << std::endl;
         return -1;
     }
@@ -106,19 +103,19 @@ int main() {
     //Main Loop
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
-        MyLayout::SetLayout(model);
-        if(model.need_update) {
+        MyLayout::SetLayout(model, camera);
+        if (model.need_update) {
             Model _model;
             _model.SetModelPath(model.GetModelPath());
             _model.Load();
             model = _model;
             model.need_update = false;
-            model.status = true;
+            model.load_status = true;
         }
         glClearColor(BACKGROUND_COLOR_R, BACKGROUND_COLOR_G, BACKGROUND_COLOR_B, BACKGROUND_COLOR_A);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
         //
-        if(model.status) {
+        if (model.load_status) {
             shader.Use();
             //
             if (camera.need_update) {
@@ -133,8 +130,7 @@ int main() {
             glUniformMatrix4fv(glGetUniformLocation(shader.Program, "model"), 1, GL_FALSE,
                                glm::value_ptr(model.GetModelMatrix()));
             //For convenience, set the light position equal to camera position
-            glm::vec3 camerapos = camera.GetCameraPosition();
-            light.SetPosition(camerapos);
+            light.SetPosition(camera.GetCartesianPos() + glm::vec3(-1, 1, camera.GetCartesianPos().z * 2));
             glUniform3f(glGetUniformLocation(shader.Program, "light1.position"), light.GetPosition().x,
                         light.GetPosition().y, light.GetPosition().z);
             glUniform3f(glGetUniformLocation(shader.Program, "light1.ambient"), light.GetAmbient().r,
@@ -153,11 +149,30 @@ int main() {
             glUniform3f(glGetUniformLocation(shader.Program, "material.specular"), model.GetMatSpecular().r,
                         model.GetMatSpecular().g, model.GetMatSpecular().b);
             glUniform1f(glGetUniformLocation(shader.Program, "material.shininess"), model.GetMatShininess());
+            //render mode
+            glUniform1i(glGetUniformLocation(shader.Program,"mode"),model.render_mode);
             //
             model.Draw(shader);
-        }
 
+        }
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         MyLayout::Render();
+
+        switch (model.draw_pattern) {
+            case 0:
+                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+                //std::cout<<model.draw_pattern<<std::endl;
+                break;
+            case 1:
+                glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
+                //std::cout<<model.draw_pattern<<std::endl;
+                break;
+            case 2:
+                glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+                //std::cout<<model.draw_pattern<<std::endl;
+                break;
+        }
+        //glEnable(GL_DEPTH_TEST);
         glfwSwapBuffers(window);
     }
     MyLayout::ShutDown();
@@ -173,7 +188,7 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
 }
 
 void cursor_callback(GLFWwindow *window, double xpos, double ypos) {
-    if (ARCACTIVE && xpos > 150) {
+    if (ARCACTIVE && xpos > 180) {
         float dTheta = ((float) (LAST_X - xpos) * camera.rotate_speed);
         float dPhi = ((float) (LAST_Y - ypos) * camera.rotate_speed);
         camera.Rotate(-dTheta, dPhi);

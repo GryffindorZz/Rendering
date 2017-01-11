@@ -59,7 +59,7 @@ void Camera3D::Zoom(float distance) {
 
 void Camera3D::Pan(float dx, float dy) {
     need_update = true;
-    glm::vec3 look = glm::normalize(target - GetCameraPosition());
+    glm::vec3 look = glm::normalize(target - GetCartesianPos());
     glm::vec3 world_up = glm::vec3(0.0f,up,0.0f);
     glm::vec3 right = glm::cross(look,world_up);
     glm::vec3 w_up = glm::cross(look,right);
@@ -71,7 +71,7 @@ glm::mat4 Camera3D::GetViewMatirx() {
 }
 
 void Camera3D::UpdateViewMatrix() {
-    ViewMatrix = glm::lookAt(GetCameraPosition(), target, glm::vec3(0.0f, up, 0.0f));
+    ViewMatrix = glm::lookAt(GetCartesianPos(), target, glm::vec3(0.0f, up, 0.0f));
 }
 
 glm::mat4 Camera3D::GetProjMatrix() {
@@ -90,8 +90,16 @@ void Camera3D::Reset() {
     target = glm::vec3(0.0f,0.0f,0.0f);
 }
 
-glm::vec3 Camera3D::GetCameraPosition() {
+glm::vec3 Camera3D::GetCartesianPos() {
     return target + ToCartesian();
+}
+
+float* Camera3D::GetSpherialPos() {
+    float* s_pos;
+    s_pos[0] = theta;
+    s_pos[1] = phi;
+    s_pos[2] = radius;
+    return s_pos;
 }
 
 glm::vec3 Camera3D::ToCartesian() {
