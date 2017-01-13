@@ -130,7 +130,8 @@ int main() {
             glUniformMatrix4fv(glGetUniformLocation(shader.Program, "model"), 1, GL_FALSE,
                                glm::value_ptr(model.GetModelMatrix()));
             //For convenience, set the light position equal to camera position
-            light.SetPosition(camera.GetCartesianPos() + glm::vec3(-1, 1, camera.GetCartesianPos().z * 2));
+            //light.SetPosition(camera.GetCartesianPos() + glm::vec3(-1, 1, camera.GetCartesianPos().z * 2));
+            light.SetPosition(camera.GetCartesianPos());
             glUniform3f(glGetUniformLocation(shader.Program, "light1.position"), light.GetPosition().x,
                         light.GetPosition().y, light.GetPosition().z);
             glUniform3f(glGetUniformLocation(shader.Program, "light1.ambient"), light.GetAmbient().r,

@@ -11,6 +11,9 @@ void ShowParameterBar(Model &model, Camera3D &camera);
 
 void ShowFPS();
 
+//
+static int global_layer = 1;
+
 
 bool MyLayout::Init(GLFWwindow *window) {
     if (!ImGui_ImplGlfwGL3_Init(window, true))
@@ -132,27 +135,28 @@ void ShowParameterBar(Model &model, Camera3D &camera) {
             ImGui::TreePop();
         }
         if (ImGui::TreeNode("Cluster")) {
-            static int cluster_layer = 1;
+            static int cluster_layer = 0;
             ImGui::SliderInt("layer", &cluster_layer, 0, 3);
-
             static bool is_cluster = model.need_cluster;
             ImGui::Checkbox("cluster color", &is_cluster);
             if (is_cluster) {
                 if (model.total_clus.empty())
                     model.ScaleCluster();
-                if (model.cluster_layer != cluster_layer)
-                    model.UpdateClusterColor();
+                if (cluster_layer != global_layer)
+                    model.need_update_cluster_color = true;
+                else
+                    model.need_update_cluster_color = false;
+                if (model.need_update_cluster_color)
+                    model.UpdateClusterColor(cluster_layer);
+                global_layer = cluster_layer;
                 model.render_mode = 1;
+
             } else
                 model.render_mode = 0;
-            model.cluster_layer = cluster_layer;
             ImGui::TreePop();
         }
     }
-
-
     ImGui::End();
-
 }
 
 void ShowFPS() {

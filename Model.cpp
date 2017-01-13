@@ -24,6 +24,18 @@ void SetClusterId(std::vector<Cluster> &clus);
 
 //For other clusters, setting the current cluster visit to false
 void SetClusterVisitFalse(std::vector<Cluster> &clus);
+
+//Cluster small scale agein
+void ClusterSmallScale(std::vector<Cluster> &clus, MyMesh &mesh);
+
+//Sort
+void SortCluster(std::vector<Cluster> &clus, MyMesh &mesh);
+
+//Set small flag
+void SetSmallFlag(std::vector<Cluster> &clus);
+
+//Compare
+bool Compare(Cluster a, Cluster b);
 ////////////
 
 Model::Model() {
@@ -35,11 +47,11 @@ Model::Model() {
     load_status = false;
     need_cluster = false;
     render_mode = 0;
-    cluster_layer = 0;
+    need_update_cluster_color = false;
 }
 
 void Model::Load() {
-
+    std::cout<<model_path<<std::endl;
     mesh.request_face_normals();
     mesh.request_vertex_normals();
     std::string _path = model_path;
@@ -255,16 +267,18 @@ void Model::ScaleCluster() {
                 each_clus.face_number++;
                 for (MyMesh::FaceVertexIter fv_it = mesh.fv_iter(f_handle); fv_it.is_valid(); ++fv_it) {
                     MyMesh::VertexHandle v_handle = *fv_it;
-                    each_clus.vertex.insert(v_handle);
+                    each_clus.vertex.insert((v_handle));
                 }
                 for (MyMesh::FaceHalfedgeIter fh_it = mesh.fh_iter(f_handle); fh_it.is_valid(); ++fh_it) {
                     MyMesh::HalfedgeHandle opposite = mesh.opposite_halfedge_handle(*fh_it);
-                    MyMesh::FaceHandle face_handle = mesh.face_handle(opposite);
-                    if (mesh.property(face_id, f_handle) != mesh.property(face_id, face_handle)) {
-                        MyMesh::HalfedgeHandle tmp_fh_it = *fh_it;
-                        each_clus.boundary.insert(tmp_fh_it);
-                    } else {
-                        each_clus.boundary.erase(opposite);
+                    if(opposite.is_valid()) {
+                        MyMesh::FaceHandle face_handle = mesh.face_handle(opposite);
+                        if (mesh.property(face_id, f_handle) != mesh.property(face_id, face_handle)) {
+                            MyMesh::HalfedgeHandle tmp_fh_it = *fh_it;
+                            each_clus.boundary.insert(tmp_fh_it);
+                        } else {
+                            each_clus.boundary.erase(opposite);
+                        }
                     }
                 }
                 Q.pop();
@@ -288,6 +302,7 @@ void Model::ScaleCluster() {
 //            }
 //            each_clus.scale = 4.0f*each_clus.area/each_clus.perimeter;
             ++id;
+            //std::cout << each_clus.face_number << std::endl;
             first_clus.push_back(each_clus);
         }
     }
@@ -340,7 +355,7 @@ void Model::ScaleCluster() {
                         if (face_handle.is_valid()) {
                             Cluster &adjacency = total_clus[count][mesh.property(face_id, face_handle)];
                             if (!adjacency.visit) {
-                                if (OpenMesh::dot(total_clus[count][i].repre_normal, adjacency.repre_normal) > 0.75) {
+                                if (OpenMesh::dot(total_clus[count][i].repre_normal, adjacency.repre_normal) > 0.8) {
                                     adjacency.visit = true;
                                     Q.push(adjacency);
                                 }
@@ -354,6 +369,7 @@ void Model::ScaleCluster() {
             }
 
         }
+        ClusterSmallScale(each_scale_clus,mesh);
         total_clus.push_back(each_scale_clus);
         ++count;
     }
@@ -380,7 +396,119 @@ void SetClusterVisitFalse(std::vector<Cluster> &clus) {
         clus[i].visit = false;
 }
 
-void Model::UpdateClusterColor() {
+void ClusterSmallScale(std::vector<Cluster> &clus, MyMesh &mesh) {
+    SortCluster(clus, mesh);
+    //m <face_number, frequency>
+    std::map<int, int> m;
+    int val = 0;
+    m[val] = 0;
+    //fine the max freqency of face_number
+    for (int i = 0; i < clus.size(); ++i) {
+        ++m[clus[i].face_number];
+        if (m[clus[i].face_number] > m[val])
+            val = clus[i].face_number;
+    }
+    SetSmallFlag(clus);
+    int small_count = 0;
+    for (int i = 0;; ++i) {
+        if (clus[i].face_number >= val) {
+            small_count = i;
+            break;
+        }
+    }
+    small_count += m[val];
+    for (int i = 0; i < small_count; ++i)
+        clus[i].small_flag = 1;
+    for (int i = 0; i < small_count; ++i) {
+        float small_angle = -1;
+        int similar_id = -1;
+        for (auto j = clus[i].boundary.begin(); j != clus[i].boundary.end(); ++j) {
+            MyMesh::HalfedgeHandle he_handle = *j;
+            MyMesh::HalfedgeHandle opposite = mesh.opposite_halfedge_handle(he_handle);
+            MyMesh::FaceHandle face_handle = mesh.face_handle(opposite);
+            int idx = mesh.property(face_id, face_handle);
+            Cluster &adjacency = clus[idx];
+            if (adjacency.small_flag != 1) {
+                float angle = OpenMesh::dot(clus[i].repre_normal, adjacency.repre_normal);
+                if (angle > small_angle) {
+                    small_angle = angle;
+                    similar_id = adjacency.cluster_id;
+                }
+            }
+        }
+        if (similar_id != -1) {
+            for (auto j = clus[i].boundary.begin(); j != clus[i].boundary.end(); ++j) {
+                MyMesh::HalfedgeHandle heHandle = *j;
+                MyMesh::HalfedgeHandle opposite = mesh.opposite_halfedge_handle(heHandle);
+                MyMesh::FaceHandle faceHandle = mesh.face_handle(opposite);
+                int sID = mesh.property(face_id, faceHandle);
+                if (sID == similar_id) {
+                    clus[similar_id].boundary.erase(opposite);
+                    //clus[similar_id].perimeter -= mesh.property(edge_length, opposite);
+                } else {
+                    clus[similar_id].boundary.insert(*j);
+                    //clus[similar_id].perimeter += mesh.property(edge_length, *j);
+                }
+            }
+            for (int j = 0; j < clus[i].face.size(); ++j) {
+                clus[similar_id].face.push_back(clus[i].face[j]);
+            }
+            for (auto j = clus[i].vertex.begin(); j != clus[i].vertex.end(); ++j) {
+                clus[similar_id].vertex.insert(*j);
+            }
+            clus[similar_id].repre_normal += clus[i].repre_normal;
+            clus[similar_id].repre_normal.normalize();
+            clus[similar_id].face_number += clus[i].face_number;
+            clus[similar_id].area += clus[i].area;
+            clus[similar_id].scale = 4.0 * clus[similar_id].area / clus[similar_id].perimeter;
+        } else {
+            clus[i].small_flag = 0;
+        }
+    }
+    std::vector<Cluster> new_clus;
+    for (int i = 0; i < clus.size(); ++i) {
+        if (clus[i].small_flag != 1)
+            new_clus.push_back(clus[i]);
+    }
+    for (int i = 0; i < new_clus.size(); ++i) {
+        new_clus[i].cluster_id = i;
+        for (int j = 0; j < new_clus[i].face.size(); ++j)
+            mesh.property(face_id, new_clus[i].face[j]) = i;
+    }
+//    for (int i = 0; i < new_clus.size(); ++i)
+//    {
+//        new_clus[i].cluster_id = i;
+//        for (auto j = new_clus[i].vertex.begin(); j != new_clus[i].vertex.end(); ++j)
+//        {
+//            mesh.data(*j).[vertexBlongIndex] = i;
+//        }
+//    }
+//    vertexBlongIndex++;
+    //     clu.clear();
+    clus = new_clus;
+    std::cout << "cluster size: " << clus.size() << std::endl;
+}
+
+void SetSmallFlag(std::vector<Cluster> &clus) {
+    for (int i = 0; i < clus.size(); ++i)
+        clus[i].small_flag = 0;
+}
+
+void SortCluster(std::vector<Cluster> &clus, MyMesh &mesh) {
+    std::sort(clus.begin(), clus.end(), Compare);
+    for (int i = 0; i < clus.size(); ++i) {
+        clus[i].cluster_id = i;
+        for (int j = 0; j < clus[i].face.size(); ++j)
+            mesh.property(face_id, clus[i].face[j]) = i;
+    }
+
+}
+
+bool Compare(Cluster a, Cluster b) {
+    return a.face_number < b.face_number ? true : false;
+}
+
+void Model::UpdateClusterColor(int layer) {
     glm::vec3 DarkRED(1.0 * 230 / 255, 1.0 * 47 / 255, 1.0 * 47 / 255);
     glm::vec3 LightRED(1.0 * 234 / 255, 1.0 * 153 / 255, 1.0 * 153 / 255);
     glm::vec3 DarkGREEN(1.0 * 46 / 255, 1.0 * 99 / 255, 1.0 * 19 / 255);
@@ -391,45 +519,47 @@ void Model::UpdateClusterColor() {
     glm::vec3 YELLOW(1.0 * 241 / 255, 1.0 * 193 / 255, 1.0 * 50 / 255);
 //     enum COLOR {RED,GREEN,BLUE,PUPLE,YELLOW};
     int k = 0;
-    std::cout<<total_clus.size()<<std::endl;
-    for (int i = 0; i < total_clus[cluster_layer].size(); ++i, ++k) {
+    for (int i = 0; i < total_clus[layer].size(); ++i, ++k) {
         glm::vec3 col;
-        if (k == 8)
-            k = 0;
-        switch (k) {
-            case 0:
-                col = DarkRED;
-                break;
-            case 1:
-                col = LightRED;
-                break;
-            case 2:
-                col = DarkGREEN;
-                break;
-            case 3:
-                col = LightGREEN;
-                break;
-            case 4:
-                col = DarkBLUE;
-                break;
-            case 5:
-                col = LightBLUE;
-                break;
-            case 6:
-                col = PURPLE;
-                break;
-            case 7:
-                col = YELLOW;
-                break;
-            default:
-                break;
-        }
-        //col.r = 1.0*rand() / RAND_MAX;
-        //col.g = 1.0*rand() / RAND_MAX;
-        //col.b = 1.0*rand() / RAND_MAX;
-        for (auto j = total_clus[0][i].vertex.begin(); j != total_clus[0][i].vertex.end(); ++j) {
+
+
+//        if (k == 8)
+//            k = 0;
+//        switch (k) {
+//            case 0:
+//                col = DarkRED;
+//                break;
+//            case 1:
+//                col = LightRED;
+//                break;
+//            case 2:
+//                col = DarkGREEN;
+//                break;
+//            case 3:
+//                col = LightGREEN;
+//                break;
+//            case 4:
+//                col = DarkBLUE;
+//                break;
+//            case 5:
+//                col = LightBLUE;
+//                break;
+//            case 6:
+//                col = PURPLE;
+//                break;
+//            case 7:
+//                col = YELLOW;
+//                break;
+//            default:
+//                break;
+//        }
+        col.r = 1.0 * rand() / RAND_MAX;
+        col.g = 1.0 * rand() / RAND_MAX;
+        col.b = 1.0 * rand() / RAND_MAX;
+        for (auto j = total_clus[layer][i].vertex.begin(); j != total_clus[layer][i].vertex.end(); ++j) {
 /*                   for (MyMesh::FaceVertexIter fv_it = mesh.fv_iter(totalCluster[scale][i].face[j]); fv_it.is_valid(); ++fv_it)
                            vertex[fv_it->idx()].color = col;        */
+
             vertex[j->idx()].color = col;
         }
     }

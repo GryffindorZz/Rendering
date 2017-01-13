@@ -57,7 +57,7 @@ public:
     void SetMatShininess(float s);
     //
     void ScaleCluster();
-    void UpdateClusterColor();
+    void UpdateClusterColor(int layer);
     //
     MyMesh mesh;
     std::vector<Vertex> vertex;
@@ -68,7 +68,7 @@ public:
     bool need_cluster;
     std::vector<std::vector<Cluster>> total_clus;
     int render_mode;
-    int cluster_layer;
+    bool need_update_cluster_color;
 private:
     GLuint VAO;
     GLuint VBO;
